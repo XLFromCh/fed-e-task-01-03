@@ -1,0 +1,10 @@
+$bady-bg: #f8f8f8;
+$fz-bg: red;
+body {
+  margin: 0 auto;
+  padding: 20px;
+  max-width: 800px;
+  background-color: $bady-bg;
+  color: $fz-bg;
+  font-size: 20px;
+}
