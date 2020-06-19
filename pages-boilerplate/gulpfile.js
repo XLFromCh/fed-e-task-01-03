@@ -10,21 +10,21 @@ const bs = browserSync.create();
 const style = () => {
   return src("src/assets/styles/*.scss", { base: "src" })
     .pipe(plugins.sass({ outputStyle: "expanded" }))
-    .pipe(dest("dist"))
+    .pipe(dest("temp"))
     .pipe(bs.reload({ stream: true }));
 };
 
 const script = () => {
   return src("src/assets/scripts/*.js", { base: "src" })
     .pipe(plugins.babel({ presets: ["@babel/preset-env"] }))
-    .pipe(dest("dist"))
+    .pipe(dest("temp"))
     .pipe(bs.reload({ stream: true }));
 };
 
 const page = () => {
   return src("src/*.html", { base: "src" })
     .pipe(plugins.swig({ data, defaults: { cache: false } }))
-    .pipe(dest("dist"))
+    .pipe(dest("temp"))
     .pipe(bs.reload({ stream: true }));
 };
 
@@ -53,12 +53,11 @@ const extra = () => {
 };
 
 const clean = () => {
-  return del(["dist", "temp"]);
+  return del(["dist", "temp", "release"]);
 };
 
-const compile = series(clean, parallel(style, script, page));
+const compile = parallel(style, script, page);
 
-const build = series(clean, parallel(compile, image, font, extra));
 
 const serve = () => {
   watch("src/assets/styles/*.scss", style);
@@ -73,7 +72,7 @@ const serve = () => {
     notify: false,
     port: 8012,
     server: {
-      baseDir: ["dist", "src", "public"],
+      baseDir: ["temp", "src", "public"],
       routes: {
         "/node_modules": "node_modules",
       },
@@ -81,38 +80,31 @@ const serve = () => {
   });
 };
 
-const useref = () => {
+const userefTask = () => {
   return (
-    src("dist/*.html", { base: "dist" })
+    src("temp/*.html", { base: "temp" })
       .pipe(plugins.useref({ searchPath: ["dist", "."] }))
-      
-      /* .pipe(plugins.if(/\.js$/, plugins.uglify()))
+      .pipe(plugins.if(/\.js$/, plugins.uglify()))
       .pipe(plugins.if(/\.css$/, plugins.cleanCss()))
       .pipe(
         plugins.if(
           /\.html$/,
           plugins.htmlmin({
-            collapseWhitespace: true,
-            minifyCSS: true,
-            minifyJS: true,
+            collapseWhitespace: true,//折叠所有空白字符
+            minifyCSS: true,//压缩行内样式
+            minifyJS: true,//压缩script标签
           })
         )
-      ) */
+      )
       .pipe(dest("dist"))
   );
 };
 
-const dev = series(compile, serve);
+const build = series(clean, parallel(series(compile, userefTask), image, font, extra));
+const dev = series(clean, compile, serve);
 module.exports = {
-  style,
-  script,
-  page,
-  image,
-  font,
-  compile,
   clean,
   build,
   serve,
-  dev,
-  useref,
+  dev
 };
