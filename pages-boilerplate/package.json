@@ -33,7 +33,7 @@
     "creat": "node cli.js"
   },
   "bin": {
-    "my-cli": "./cli,js"
+    "pages-boilerplate": "./cli,js"
   },
   "browserslist": [
     "last 1 version",
